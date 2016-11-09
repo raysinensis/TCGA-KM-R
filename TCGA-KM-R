@@ -1,0 +1,39 @@
+##load sequencing data
+setwd('/media/rf/Work/TCGA data/TCGA_LAML_exp_HiSeqV2-2015-02-24' )
+data<-read.table("genomicMatrix",sep='\t',header=T,row.names=1,check.names=F)
+head(data,5)
+
+##filter for genes of interest
+genes<-c("PNPT1","DIS3L2","ZCCHC11","ZCCHC6","ZFP36","RBL2")
+dgenes<-data[genes,]
+tdgenes<-t(dgenes)
+head(tdgenes,5)
+
+##load patient data, and merge with seq
+patient<-read.table("clinical_data",sep="\t",header=T,row.names=1)
+patientgenes<-merge(tdgenes,patient,by.x=0,by.y=0)
+head(patientgenes,5)
+
+##calculate and designate 25 and 75 quantile expression
+level=patientgenes$zfp36
+quantilelow<-quantile(level,c(0.25))
+quantilehi<-quantile(level,c(0.75))
+ZFP36quart<-function(ZFP36){if(ZFP36<=quantilelow){"low"} else if(ZFP36>=quantilehi){"high"}}
+patientgenes$ZFP36q<-mapply(ZFP36quart,patientgenes$ZFP36)
+head(patientgenes,5)
+
+##filter out median expression and empty entries
+quartdata<-subset(patientgenes, ZFP36q!="NULL")
+quartdata$ZFP36q<-as.character(quartdata$ZFP36q)
+quartdata[complete.cases(quartdata$'X_OS'),]
+##write.table(quartdata, "quartdata.txt", sep="\t")
+
+##survival curve
+install.packages("OIsurv")
+library(OIsurv)
+##quartdata <- read.table("quartdata.txt", sep="\t", header=T)
+survgene<-Surv(as.numeric(quartdata$'X_OS'),as.numeric(quartdata$'X_OS_IND'))
+fit1 <- survfit(survgene~quartdata$ZFP36q)
+plot(fit1, main="Overall survival", xlab="Days", ylab="Survival function", mark.time=T, mark=3, col=1, lty=c(1,2))
+legend(2000, 1.0, c("High", "Low") , lty=c(1,2) )
+survdiff(Surv(quartdata$'X_OS',quartdata$'X_OS_IND') ~ quartdata$ZFP36q)

@@ -1,5 +1,6 @@
 # TCGA-KM-R
 looking through the The Cancer Genome Atlas dataset, and running Kaplan–Meier analysis in R
+(the original runs analysis on 1 gene of interest, a list can be used for the "4list" variant)
 
 to start, 3rd tier data including gene expression info is the easiest to work with
 go to https://genome-cancer.ucsc.edu/proj/site/hgHeatmap/ or http://gdac.broadinstitute.org/ for downloading data of various cancers

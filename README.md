@@ -1,6 +1,6 @@
 # TCGA-KM-R
 looking through the The Cancer Genome Atlas dataset, and running Kaplan–Meier analysis in R
-(the original runs analysis on 1 gene of interest, a list can be used for the "4list" variant)
+(the original runs analysis on 1 gene of interest, a list can be used for the "list" variant)
 
 to start, 3rd tier data including gene expression info is the easiest to work with
 go to https://genome-cancer.ucsc.edu/proj/site/hgHeatmap/ or http://gdac.broadinstitute.org/ for downloading data of various cancers
@@ -19,3 +19,11 @@ Step-by-step:
 4)change the gene name to one of your interest
 
 5)run script, a pdf with the KM plot will be added to each sub-folder, p-values will be reported in output.txt
+
+or run the "list" variant:
+
+3)designate path
+
+4)list of genes
+
+5)output csv file for each gene

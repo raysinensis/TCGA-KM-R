@@ -3,7 +3,7 @@ library(maxstat)
 library(exactRankTests)
 library(OIsurv)
 
-mainpath<-'/media/rf/30F439E9F439B1C8/TCGA project'
+mainpath<-'/media/rf/Work/TCGA data'
 outputfile<-'output.txt'
 ##load all folders
 folderlist<-list.dirs(mainpath)
@@ -48,21 +48,24 @@ for(foldername in folderlist) {
 		##write(quantilehi,outputfile,append=T)
 
 ##filter out empty entries
-		patientgenes[complete.cases(patientgenes$'X_OS'),]
+		patientgenes<-patientgenes[complete.cases(patientgenes$'X_OS'),]
 
-##using maxstat to determine cutoff
+##using maxstat to determine cutoff, may need to random sample if sample size is too large
 		survdata <- as.data.frame.matrix(patientgenes) 
 		rownum <- nrow(survdata)
 		if (rownum<=800) {
-		cutoff <- maxstat.test(Surv(X_OS,X_OS_IND) ~ geneofinterest, data=survdata, smethod="LogRank", pmethod="HL")
+		cutoff <- tryCatch(maxstat.test(Surv(X_OS,X_OS_IND) ~ geneofinterest, data=survdata, smethod="LogRank", pmethod="HL"),error=function(w){message("cannot run maxstat")})
 		cutnum<-as.numeric(cutoff$estimate)
 		} else {
 		print("random sampling")
 		survdata<-survdata[sample(rownum,800), ]
-		cutoff <- maxstat.test(Surv(X_OS,X_OS_IND) ~ geneofinterest, data=survdata, smethod="LogRank", pmethod="HL")
+		cutoff <- tryCatch(maxstat.test(Surv(X_OS,X_OS_IND) ~ geneofinterest, data=survdata, smethod="LogRank", pmethod="HL"),error=function(w){message("cannot run maxstat")})
 		cutnum<-as.numeric(cutoff$estimate)}
 		print(cutnum)
-
+##error may occur if specific cancer has low death events
+		if (length(cutnum)==0) {
+		break}
+		
 ##sort to low and high groups
 		genequant<-function(geneofinterest){if(geneofinterest<cutnum){("low")} else if(geneofinterest>cutnum){("high")}}
 		patientgenes$geneQ<-mapply(genequant,patientgenes$geneofinterest)
@@ -83,8 +86,8 @@ for(foldername in folderlist) {
 		dev.off()
 		sdiff<-survdiff(Surv(quartdata$'X_OS',quartdata$'X_OS_IND') ~ quartdata$geneQ)
 		pval<- 1 - pchisq(sdiff$chisq, length(sdiff$n) - 1)
-		##write(c(sdiff$chisq, pval), sep=",", file=outputfile,append=T)
-		resultmatrix=matrix(c(genename, cancername, sdiff$chisq, pval, cutnum), nrow=1, ncol=5)
+##write(c(sdiff$chisq, pval), sep=",", file=outputfile,append=T)
+		resultmatrix=matrix(c(genename, cancername, sdiff$chisq, pval, cutnum, rownum), nrow=1, ncol=6)
 ##output as csv file, column 4 is pval
 		write.table(resultmatrix, outputfile, sep=",", append=T, col.names = F, row.names = F)
 		cat("processed: ", genename, " in ", cancername, "\n", sep="")

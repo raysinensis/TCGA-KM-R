@@ -94,3 +94,16 @@ for(foldername in folderlist) {
 	}
 
 }
+
+##adjust p values for multiple comparisons
+csvfiles <- list.files(path=mainpath, pattern="*.csv")
+for (singlecsv in csvfiles) {
+	fullfilename <-paste(mainpath,"/",singlecsv,sep="")
+	generesult <- read.csv(file=fullfilename, header=FALSE, sep=",")
+	pvalues <- generesult$V4
+	fdrs <- p.adjust(pvalues,method="BH",n=length(pvalues))
+	generesult$V7 <- fdrs
+	oldfilename <- gsub("-output.csv","",fullfilename)
+	newfilename <- paste(oldfilename,"-adj.csv",sep="")
+	write.table(generesult,newfilename,append=T, col.names = F, row.names = F, sep=",")
+}
